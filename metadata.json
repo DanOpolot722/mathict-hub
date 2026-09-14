@@ -1,0 +1,7 @@
+{
+  "name": "Mr. Opolot Dan — Mathematics & ICT Learning Hub",
+  "description": "Free Mathematics and ICT notes, past papers, assignments, and tutoring support for Ugandan secondary school students by Mr. Opolot Dan.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
