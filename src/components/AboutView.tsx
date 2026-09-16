@@ -1,4 +1,5 @@
 import { SITE_CONFIG, buildWhatsAppLink } from '../data/config';
+import danAvatar from '../assets/images/dan-avatar.jpg';
 import { 
   GraduationCap, 
   Award, 
@@ -40,7 +41,7 @@ export function AboutView() {
             {/* Avatar Photo */}
             <div className="relative mx-auto w-28 h-28 sm:w-32 sm:h-32 rounded-full overflow-hidden border-4 border-[#14B8A6] shadow-xl bg-[#0B3E91]">
               <img
-                src="/assets/dan-avatar.jpg"
+                src={danAvatar}
                 alt="Mr. Opolot Dan"
                 className="w-full h-full object-cover object-top"
                 referrerPolicy="no-referrer"

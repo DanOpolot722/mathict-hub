@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { ActiveTab } from '../types';
 import { SITE_CONFIG, buildWhatsAppLink } from '../data/config';
+import danPortrait from '../assets/images/dan-portrait.jpg';
+import danAvatar from '../assets/images/dan-avatar.jpg';
 import { 
   BookOpen, 
   Monitor, 
@@ -122,14 +124,10 @@ export function HomeView({ setActiveTab, resourceCount }: HomeViewProps) {
               <div className="relative w-full max-w-xs sm:max-w-sm">
                 <div className="aspect-[4/5] rounded-3xl overflow-hidden shadow-2xl border-2 border-white/20 bg-gradient-to-t from-[#0B3E91] to-transparent">
                   <img
-                    src="/assets/dan-portrait.jpg"
+                    src={danPortrait}
                     alt="Portrait of Mr. Opolot Dan, Mathematics and ICT teacher"
                     className="w-full h-full object-cover object-top"
                     referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      // Fallback if needed
-                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1577896851231-70ef18881754?auto=format&fit=crop&w=800&q=80';
-                    }}
                   />
                 </div>
 
@@ -271,7 +269,7 @@ export function HomeView({ setActiveTab, resourceCount }: HomeViewProps) {
           <div className="relative shrink-0">
             <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden border-3 border-[#14B8A6] shadow-md bg-[#0B3E91]">
               <img
-                src="/assets/dan-avatar.jpg"
+                src={danAvatar}
                 alt="Mr. Opolot Dan Avatar"
                 className="w-full h-full object-cover object-top"
                 referrerPolicy="no-referrer"
