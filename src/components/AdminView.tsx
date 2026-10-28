@@ -54,9 +54,11 @@ export function AdminView({
   siteConfig,
 }: AdminViewProps) {
   const { showToast } = useToast();
-  const { currentUser, isAdmin, isLoading, loginWithGoogle, logout } = useAuth();
+  const { currentUser, isAdmin, isLoading, loginWithGoogle, loginWithPasscode, logout, isPasscodeAuthenticated } = useAuth();
   const [adminTab, setAdminTab] = useState<'announcements' | 'resources' | 'pricing' | 'site_content' | 'folders'>('announcements');
   const [isSeeding, setIsSeeding] = useState(false);
+  const [passcodeInput, setPasscodeInput] = useState('');
+  const [authErrorDetail, setAuthErrorDetail] = useState<string | null>(null);
 
   // --- Announcement Form State ---
   const [annId, setAnnId] = useState<string | null>(null);
@@ -354,8 +356,20 @@ export function AdminView({
     );
   }
 
-  // 2. Unauthenticated View (Strictly only trdanopolot@gmail.com allowed)
-  if (!currentUser || !isAdmin) {
+  // 2. Unauthenticated View (Strictly restricted to Mr. Opolot Dan)
+  if (!isAdmin) {
+    const handlePasscodeSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      const success = loginWithPasscode(passcodeInput);
+      if (success) {
+        showToast('Teacher Passcode Accepted! Welcome Mr. Dan.', 'success');
+        setPasscodeInput('');
+        setAuthErrorDetail(null);
+      } else {
+        showToast('Incorrect Teacher Passcode. Please try again.', 'error');
+      }
+    };
+
     return (
       <div className="max-w-md mx-auto py-12 px-4 pb-20">
         <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-white/70 dark:border-white/10 shadow-lg text-center space-y-5">
@@ -368,21 +382,41 @@ export function AdminView({
               Private Teacher Admin
             </h1>
             <p className="text-xs sm:text-sm text-[#4E6478] dark:text-[#9FB6CC] leading-relaxed">
-              Strictly restricted to Mr. Opolot Dan (<strong>{PRIMARY_ADMIN_EMAIL}</strong>). No other Google accounts or visitors can log in.
+              Exclusively for Mr. Opolot Dan (<strong>{PRIMARY_ADMIN_EMAIL}</strong>).
             </p>
           </div>
 
-          <div className="pt-2">
+          {/* Error explanation banner if Google popup errored */}
+          {authErrorDetail && (
+            <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-left text-xs text-amber-800 dark:text-amber-200 space-y-1">
+              <strong className="block font-semibold">Sign-In Note:</strong>
+              <p>{authErrorDetail}</p>
+              <p className="opacity-90">You can use your Master Teacher Passcode below to enter directly!</p>
+            </div>
+          )}
+
+          {/* Primary Option: Google Sign-in */}
+          <div className="space-y-3 pt-1">
             <button
               onClick={async () => {
+                setAuthErrorDetail(null);
                 try {
                   await loginWithGoogle();
                   showToast('Teacher Admin Authenticated!', 'success');
                 } catch (e: any) {
-                  if (e?.message === 'UNAUTHORIZED_ACCOUNT') {
+                  const msg = e?.message || '';
+                  if (msg === 'UNAUTHORIZED_ACCOUNT') {
+                    setAuthErrorDetail(`You signed in with an unauthorized account. Access is strictly granted to ${PRIMARY_ADMIN_EMAIL}.`);
                     showToast('Access Denied: Only trdanopolot@gmail.com is authorized.', 'error');
+                  } else if (e?.code === 'auth/unauthorized-domain' || msg.includes('unauthorized domain')) {
+                    setAuthErrorDetail('Google requires GitHub Pages (danopolot722.github.io) in Firebase Authorized Domains. Use the Teacher Passcode below to log in right now!');
+                    showToast('Domain not yet authorized in Firebase. Use Passcode below.', 'error');
+                  } else if (e?.code === 'auth/popup-blocked') {
+                    setAuthErrorDetail('Your mobile/browser blocked the Google popup window. Please allow popups or use the Passcode below.');
+                    showToast('Popup was blocked by your browser.', 'error');
                   } else {
-                    showToast('Sign-In cancelled or error occurred.', 'error');
+                    setAuthErrorDetail(e?.message || 'Google Sign-In was cancelled or encountered a network error.');
+                    showToast('Google Sign-In error. Try passcode below.', 'error');
                   }
                 }
               }}
@@ -394,9 +428,40 @@ export function AdminView({
                 <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
                 <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
               </svg>
-              <span>Sign in as Mr. Dan</span>
+              <span>Sign in with Google</span>
             </button>
           </div>
+
+          <div className="relative my-4 flex items-center justify-center">
+            <div className="border-t border-gray-200 dark:border-white/10 w-full" />
+            <span className="bg-white dark:bg-[#0E2540] px-3 text-xs font-mono text-[#4E6478] dark:text-[#9FB6CC] uppercase shrink-0">
+              Or Master Passcode
+            </span>
+          </div>
+
+          {/* Secondary Option: Direct Teacher Passcode */}
+          <form onSubmit={handlePasscodeSubmit} className="space-y-3 text-left">
+            <div>
+              <label className="block text-xs font-semibold text-[#0B3E91] dark:text-[#EAF2FA] mb-1">
+                Enter Teacher Passcode
+              </label>
+              <input
+                type="password"
+                required
+                value={passcodeInput}
+                onChange={(e) => setPasscodeInput(e.target.value)}
+                placeholder="Enter passcode..."
+                className="w-full text-sm p-3 rounded-xl border border-gray-200 dark:border-white/15 bg-white dark:bg-[#061A2E] text-[#142433] dark:text-white focus:outline-none focus:ring-2 focus:ring-[#14B8A6]"
+              />
+            </div>
+            <button
+              type="submit"
+              className="w-full min-h-[46px] px-4 py-3 rounded-xl bg-[#0B3E91] hover:bg-[#1451B8] text-white font-semibold text-sm flex items-center justify-center gap-2 shadow"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              Unlock Admin Panel
+            </button>
+          </form>
         </div>
       </div>
     );
@@ -414,7 +479,7 @@ export function AdminView({
               Teacher Admin (Sole Manager)
             </span>
             <span className="text-xs text-[#4E6478] dark:text-[#9FB6CC]">
-              {currentUser.email}
+              {currentUser?.email || 'Passcode Authenticated'}
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-[#0B3E91] dark:text-[#EAF2FA]">
