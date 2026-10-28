@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { ResourceItem, Subject } from '../types';
-import { INITIAL_RESOURCES, SITE_CONFIG, buildWhatsAppLink, buildDriveFolderUrl, buildDriveEmbedUrl } from '../data/config';
+import { SITE_CONFIG, buildWhatsAppLink, buildDriveFolderUrl, buildDriveEmbedUrl } from '../data/config';
 import { useToast } from './Toast';
 import { 
   Search, 
@@ -16,14 +16,16 @@ import {
   ChevronRight,
   Sparkles,
   Info,
-  X
+  X,
+  Tag
 } from 'lucide-react';
 
 interface ResourcesViewProps {
+  resources: ResourceItem[];
   onOrderPlaced: () => void;
 }
 
-export function ResourcesView({ onOrderPlaced }: ResourcesViewProps) {
+export function ResourcesView({ resources, onOrderPlaced }: ResourcesViewProps) {
   const { showToast } = useToast();
   const [activeSubject, setActiveSubject] = useState<Subject>('mathematics');
   const [selectedLevel, setSelectedLevel] = useState<string>('All');
@@ -33,7 +35,7 @@ export function ResourcesView({ onOrderPlaced }: ResourcesViewProps) {
 
   // Filtered resources
   const filteredResources = useMemo(() => {
-    return INITIAL_RESOURCES.filter((res) => {
+    return resources.filter((res) => {
       if (res.subject !== activeSubject) return false;
       if (selectedLevel !== 'All' && res.level !== selectedLevel) return false;
       if (searchQuery.trim()) {
@@ -45,7 +47,7 @@ export function ResourcesView({ onOrderPlaced }: ResourcesViewProps) {
       }
       return true;
     });
-  }, [activeSubject, selectedLevel, searchQuery]);
+  }, [resources, activeSubject, selectedLevel, searchQuery]);
 
   // Group by resource type
   const notesResources = filteredResources.filter((r) => r.type === 'notes');
@@ -67,7 +69,8 @@ export function ResourcesView({ onOrderPlaced }: ResourcesViewProps) {
   const handleOrderResource = (item: ResourceItem) => {
     onOrderPlaced();
     showToast(`Opening WhatsApp to order "${item.title}"...`, 'success');
-    const msg = `Hello Mr. Opolot Dan. I would like to order this premium resource: "${item.title}". Please share payment details / send it across.`;
+    const priceText = item.priceUgx ? ` (UGX ${item.priceUgx.toLocaleString()})` : '';
+    const msg = `Hello Mr. Opolot Dan. I would like to order this premium resource: "${item.title}"${priceText}. Please share payment details / send it across.`;
     window.open(buildWhatsAppLink(msg), '_blank', 'noopener,noreferrer');
   };
 
@@ -122,7 +125,7 @@ export function ResourcesView({ onOrderPlaced }: ResourcesViewProps) {
             <span className="font-bold text-[#A9700C] dark:text-[#F2C572] block mb-0.5">
               Free Samples + Premium Packets
             </span>
-            Key foundation resources (like Senior 1 Notes &amp; Term 2 assignments) are <strong>100% Free</strong>. Full syllabus revision packets and marking guides are <strong>Premium</strong> — tap "Order via WhatsApp" to request them directly from Mr. Dan.
+            Key foundation resources are <strong>100% Free</strong>. Full syllabus revision packets and marking guides are <strong>Premium</strong> — tap "Order via WhatsApp" to request them directly with updated pricing from Mr. Dan.
           </div>
         </div>
 
@@ -461,7 +464,7 @@ export function ResourcesView({ onOrderPlaced }: ResourcesViewProps) {
             ) : (
               <div className="space-y-3 pt-2">
                 <p className="text-xs text-[#4E6478] dark:text-[#9FB6CC]">
-                  To access the full comprehensive version with model solutions, order via WhatsApp from Mr. Dan:
+                  To access the full comprehensive version with model solutions{previewItem.priceUgx ? ` (UGX ${previewItem.priceUgx.toLocaleString()})` : ''}, order via WhatsApp from Mr. Dan:
                 </p>
                 <button
                   onClick={() => {
@@ -471,7 +474,7 @@ export function ResourcesView({ onOrderPlaced }: ResourcesViewProps) {
                   className="w-full min-h-[44px] px-4 py-2.5 rounded-xl bg-[#25D366] hover:bg-[#1EBE5A] text-white font-semibold text-sm flex items-center justify-center gap-2 shadow"
                 >
                   <FolderOpen className="w-4 h-4" />
-                  Order via WhatsApp Chat
+                  Order via WhatsApp Chat {previewItem.priceUgx ? `· UGX ${previewItem.priceUgx.toLocaleString()}` : ''}
                 </button>
               </div>
             )}
@@ -519,7 +522,7 @@ function ResourceCard({
               </span>
             ) : (
               <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#F2A73B]/15 text-[#A9700C] dark:text-[#F2C572] border border-[#F2A73B]/30">
-                🔒 Premium
+                🔒 Premium {item.priceUgx ? `· UGX ${item.priceUgx.toLocaleString()}` : ''}
               </span>
             )}
             <span className="text-[11px] font-mono text-[#4E6478] dark:text-[#9FB6CC]">
@@ -531,9 +534,11 @@ function ResourceCard({
             {item.title}
           </h4>
 
-          <p className="text-xs sm:text-sm text-[#4E6478] dark:text-[#9FB6CC] line-clamp-2 leading-relaxed">
-            {item.description}
-          </p>
+          {item.description && (
+            <p className="text-xs sm:text-sm text-[#4E6478] dark:text-[#9FB6CC] line-clamp-2 leading-relaxed">
+              {item.description}
+            </p>
+          )}
         </div>
       </div>
 

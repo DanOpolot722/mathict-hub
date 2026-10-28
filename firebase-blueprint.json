@@ -1,0 +1,195 @@
+{
+  "entities": {
+    "ResourceItem": {
+      "title": "ResourceItem",
+      "description": "Learning material, class note, assignment, or past paper",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Resource display title"
+        },
+        "subject": {
+          "type": "string",
+          "enum": ["mathematics", "ict"],
+          "description": "Subject"
+        },
+        "level": {
+          "type": "string",
+          "enum": ["S1", "S2", "S3", "S4", "S5", "S6", "All"],
+          "description": "Class level"
+        },
+        "type": {
+          "type": "string",
+          "enum": ["notes", "assignment", "past-paper", "marking-guide"],
+          "description": "Type of resource"
+        },
+        "fileFormat": {
+          "type": "string",
+          "enum": ["pdf", "doc"],
+          "description": "File format"
+        },
+        "description": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Overview description"
+        },
+        "isFree": {
+          "type": "boolean",
+          "description": "Whether free sample or paid"
+        },
+        "priceUgx": {
+          "type": "number",
+          "description": "Optional price in Ugandan Shillings (UGX)"
+        },
+        "driveUrl": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Google Drive or direct download URL"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO date string"
+        }
+      },
+      "required": ["title", "subject", "level", "type", "fileFormat", "isFree"]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "Notice board post for students and parents",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier"
+        },
+        "title": {
+          "type": "string",
+          "maxLength": 200,
+          "description": "Headline"
+        },
+        "category": {
+          "type": "string",
+          "enum": ["notes", "exam", "holiday", "update"],
+          "description": "Category badge"
+        },
+        "date": {
+          "type": "string",
+          "description": "Date string"
+        },
+        "body": {
+          "type": "string",
+          "maxLength": 2000,
+          "description": "Body message"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO date string"
+        }
+      },
+      "required": ["title", "category", "date", "body"]
+    },
+    "PricingPlan": {
+      "title": "PricingPlan",
+      "description": "Tutoring and resource package rates",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Plan ID"
+        },
+        "name": {
+          "type": "string",
+          "maxLength": 150,
+          "description": "Package name"
+        },
+        "price": {
+          "type": "string",
+          "maxLength": 100,
+          "description": "Display price (e.g., UGX 30,000 / month)"
+        },
+        "features": {
+          "type": "string",
+          "maxLength": 1000,
+          "description": "Key points / features newline-separated"
+        },
+        "badge": {
+          "type": "string",
+          "maxLength": 50,
+          "description": "Badge tag like Most Popular"
+        },
+        "order": {
+          "type": "number",
+          "description": "Sorting order"
+        }
+      },
+      "required": ["name", "price"]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Global teacher settings, phone, email, bio, school, and drive folders",
+      "type": "object",
+      "properties": {
+        "teacherName": { "type": "string", "maxLength": 100 },
+        "tagline": { "type": "string", "maxLength": 200 },
+        "country": { "type": "string", "maxLength": 100 },
+        "school": { "type": "string", "maxLength": 200 },
+        "bio": { "type": "string", "maxLength": 2000 },
+        "whatsappNumber": { "type": "string", "maxLength": 30 },
+        "whatsappMessage": { "type": "string", "maxLength": 300 },
+        "driveEmail": { "type": "string", "maxLength": 100 },
+        "heroHeading": { "type": "string", "maxLength": 200 },
+        "heroSubtitle": { "type": "string", "maxLength": 500 },
+        "mathFolder": { "type": "string", "maxLength": 200 },
+        "ictFolder": { "type": "string", "maxLength": 200 },
+        "pastPapersFolder": { "type": "string", "maxLength": 200 },
+        "assignmentsFolder": { "type": "string", "maxLength": 200 },
+        "markingGuidesFolder": { "type": "string", "maxLength": 200 }
+      }
+    },
+    "AdminProfile": {
+      "title": "AdminProfile",
+      "description": "Authorized administrator record",
+      "type": "object",
+      "properties": {
+        "email": {
+          "type": "string",
+          "description": "Admin email address"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin"],
+          "description": "Role definition"
+        }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/resources/{resourceId}": {
+      "schema": "ResourceItem",
+      "description": "Dynamic learning resources, syllabus notes, past papers and pricing"
+    },
+    "/announcements/{announcementId}": {
+      "schema": "Announcement",
+      "description": "Dynamic school announcements and notices"
+    },
+    "/pricing/{planId}": {
+      "schema": "PricingPlan",
+      "description": "Tutoring, past paper packets and revision class rates"
+    },
+    "/settings/{settingsDoc}": {
+      "schema": "SiteSettings",
+      "description": "Editable site-wide content, teacher bio, contact, and drive folders"
+    },
+    "/admins/{adminUid}": {
+      "schema": "AdminProfile",
+      "description": "Admin list for role validation"
+    }
+  }
+}

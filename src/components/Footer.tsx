@@ -101,14 +101,6 @@ export function Footer({ setActiveTab }: FooterProps) {
                   Homework Help Desk
                 </button>
               </li>
-              <li>
-                <button
-                  onClick={() => handleNav('admin')}
-                  className="hover:text-white transition-colors text-left text-white/50 hover:text-white"
-                >
-                  Teacher Admin
-                </button>
-              </li>
             </ul>
           </div>
 
@@ -146,7 +138,7 @@ export function Footer({ setActiveTab }: FooterProps) {
         {/* Bottom bar */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#8DA0A8] text-center sm:text-left">
           <p>
-            © {currentYear} {SITE_CONFIG.teacherName}. All rights reserved.
+            © {currentYear} <button onClick={() => handleNav('admin')} className="hover:text-white/80 transition-opacity focus:outline-none" title="Staff portal">{SITE_CONFIG.teacherName}</button>. All rights reserved.
           </p>
           <p className="flex items-center gap-1">
             Built for Mathematics &amp; ICT secondary learners across Uganda.

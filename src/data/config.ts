@@ -1,4 +1,4 @@
-import { SiteConfig, ResourceItem, Announcement } from '../types';
+import { SiteConfig, ResourceItem, Announcement, PricingPlan } from '../types';
 
 export const SITE_CONFIG: SiteConfig = {
   teacherName: "Mr. Opolot Dan",
@@ -29,6 +29,52 @@ export function buildDriveEmbedUrl(folderId: string): string {
   return `https://drive.google.com/embeddedfolderview?id=${folderId}#list`;
 }
 
+export const INITIAL_PRICING: PricingPlan[] = [
+  {
+    id: 'plan-single-notes',
+    name: 'Full Syllabus Notes & Guides',
+    price: 'UGX 15,000',
+    description: 'Complete termly comprehensive topic notes with worked questions',
+    features: [
+      'Comprehensive PDF module with zero gaps',
+      'Worked examination sample problems',
+      'Printable & offline smartphone friendly',
+      'Senior 1 through Senior 6 coverage'
+    ],
+    badge: 'Popular',
+    order: 1
+  },
+  {
+    id: 'plan-marking-pastpapers',
+    name: 'UNEB Past Paper & Marking Schemes',
+    price: 'UGX 25,000',
+    description: 'Complete 10-year question packets with official examiner solutions',
+    features: [
+      'UCE / UACE Mathematics Paper 1 & 2',
+      'ICT Practical walkthroughs with screenshots',
+      'Step-by-step mark distribution schemes',
+      'Examiner tips & common pitfalls highlighted'
+    ],
+    badge: 'Exam Prep',
+    order: 2
+  },
+  {
+    id: 'plan-1on1-tutoring',
+    name: '1-on-1 Online Live Tutoring',
+    price: 'UGX 60,000 / month',
+    description: 'Weekly live interactive Zoom/WhatsApp coaching tailored to the learner',
+    features: [
+      'Direct personal coaching with Mr. Opolot Dan',
+      'Homework problem breakdown & step reviews',
+      'Weekend exam prep & topic mastery drills',
+      'Parent progress updates included'
+    ],
+    popular: true,
+    badge: 'Most Comprehensive',
+    order: 3
+  }
+];
+
 export const INITIAL_RESOURCES: ResourceItem[] = [
   // Mathematics
   {
@@ -50,7 +96,8 @@ export const INITIAL_RESOURCES: ResourceItem[] = [
     type: 'notes',
     fileFormat: 'pdf',
     description: 'Algebraic expressions, linear equations, and mensuration',
-    isFree: false
+    isFree: false,
+    priceUgx: 15000
   },
   {
     id: 'math-s3-notes',
@@ -60,7 +107,8 @@ export const INITIAL_RESOURCES: ResourceItem[] = [
     type: 'notes',
     fileFormat: 'pdf',
     description: 'Circle geometry, statistics, and simultaneous equations',
-    isFree: false
+    isFree: false,
+    priceUgx: 15000
   },
   {
     id: 'math-s4-notes',
@@ -70,7 +118,8 @@ export const INITIAL_RESOURCES: ResourceItem[] = [
     type: 'notes',
     fileFormat: 'pdf',
     description: 'UCE revision: full syllabus summary and worked examples',
-    isFree: false
+    isFree: false,
+    priceUgx: 20000
   },
   {
     id: 'math-s5-notes',
@@ -80,7 +129,8 @@ export const INITIAL_RESOURCES: ResourceItem[] = [
     type: 'notes',
     fileFormat: 'pdf',
     description: 'Pure Mathematics: sequences, calculus introduction, vectors',
-    isFree: false
+    isFree: false,
+    priceUgx: 25000
   },
   {
     id: 'math-s6-notes',
@@ -90,7 +140,8 @@ export const INITIAL_RESOURCES: ResourceItem[] = [
     type: 'notes',
     fileFormat: 'pdf',
     description: 'UACE revision: statistics, mechanics, and pure mathematics',
-    isFree: false
+    isFree: false,
+    priceUgx: 25000
   },
   {
     id: 'math-assign-uce-t2',
@@ -123,6 +174,7 @@ export const INITIAL_RESOURCES: ResourceItem[] = [
     fileFormat: 'pdf',
     description: 'Full solutions, step marks, and examiner marking scheme',
     isFree: false,
+    priceUgx: 15000,
     driveUrl: 'https://drive.google.com/file/d/1WndVqKDo-LAcnM-chOQVztXVsohglCCY/view?usp=drive_link'
   },
 
@@ -146,7 +198,8 @@ export const INITIAL_RESOURCES: ResourceItem[] = [
     type: 'notes',
     fileFormat: 'pdf',
     description: 'Word processing, spreadsheets, and structured file management',
-    isFree: false
+    isFree: false,
+    priceUgx: 15000
   },
   {
     id: 'ict-s3-notes',
@@ -156,7 +209,8 @@ export const INITIAL_RESOURCES: ResourceItem[] = [
     type: 'notes',
     fileFormat: 'pdf',
     description: 'Databases, network topology, and internet security fundamentals',
-    isFree: false
+    isFree: false,
+    priceUgx: 15000
   },
   {
     id: 'ict-s4-notes',
@@ -166,7 +220,8 @@ export const INITIAL_RESOURCES: ResourceItem[] = [
     type: 'notes',
     fileFormat: 'pdf',
     description: 'UCE revision: full ICT syllabus summary & practical exam tips',
-    isFree: false
+    isFree: false,
+    priceUgx: 20000
   },
   {
     id: 'ict-practical-spreadsheet',
@@ -176,7 +231,8 @@ export const INITIAL_RESOURCES: ResourceItem[] = [
     type: 'notes',
     fileFormat: 'doc',
     description: 'Step-by-step Excel/Calc formulas, cell references, and chart exercises',
-    isFree: false
+    isFree: false,
+    priceUgx: 10000
   },
   {
     id: 'ict-assign-files',
@@ -208,7 +264,8 @@ export const INITIAL_RESOURCES: ResourceItem[] = [
     type: 'marking-guide',
     fileFormat: 'pdf',
     description: 'Practical paper walkthrough with expected screenshot outputs',
-    isFree: false
+    isFree: false,
+    priceUgx: 15000
   }
 ];
 

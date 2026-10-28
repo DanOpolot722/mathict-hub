@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://danopolot722.github.io/mathict-hub/sitemap.xml

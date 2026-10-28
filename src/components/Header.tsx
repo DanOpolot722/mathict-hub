@@ -92,16 +92,6 @@ export function Header({ activeTab, setActiveTab, isDark, toggleDarkMode }: Head
           >
             Announcements
           </button>
-          <button
-            onClick={() => handleNavClick('admin')}
-            className={`px-2.5 py-1 rounded-md text-xs font-mono transition-all ${
-              activeTab === 'admin'
-                ? 'text-[#2E7DF2] bg-[#2E7DF2]/10 font-bold'
-                : 'text-[#4E6478] dark:text-[#9FB6CC] hover:text-[#2E7DF2]'
-            }`}
-          >
-            Admin
-          </button>
         </nav>
 
         {/* Actions */}
@@ -194,17 +184,6 @@ export function Header({ activeTab, setActiveTab, isDark, toggleDarkMode }: Head
             <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#2E7DF2]/15 text-[#2E7DF2] font-semibold">
               Live
             </span>
-          </button>
-          <button
-            onClick={() => handleNavClick('admin')}
-            className={`w-full flex items-center justify-between p-3.5 rounded-xl text-left font-medium min-h-[48px] ${
-              activeTab === 'admin'
-                ? 'bg-[#2E7DF2]/15 text-[#2E7DF2] font-semibold'
-                : 'text-[#4E6478] dark:text-[#9FB6CC] hover:bg-black/5 dark:hover:bg-white/5'
-            }`}
-          >
-            <span>Teacher Admin Panel</span>
-            <span className="text-xs font-mono">🔒</span>
           </button>
         </div>
       )}

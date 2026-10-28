@@ -1,0 +1,57 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // STRICT: Only trdanopolot@gmail.com can write/modify any data
+    function isTeacherAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email != null &&
+        request.auth.token.email.lower() == 'trdanopolot@gmail.com'
+      );
+    }
+
+    // Public read for learning resources, write strictly restricted to trdanopolot@gmail.com
+    match /resources/{resourceId} {
+      allow read: if isValidId(resourceId);
+      allow create, update, delete: if isValidId(resourceId) && isTeacherAdmin();
+    }
+
+    // Public read for announcements, write strictly restricted to trdanopolot@gmail.com
+    match /announcements/{announcementId} {
+      allow read: if isValidId(announcementId);
+      allow create, update, delete: if isValidId(announcementId) && isTeacherAdmin();
+    }
+
+    // Public read for pricing plans, write strictly restricted to trdanopolot@gmail.com
+    match /pricing/{planId} {
+      allow read: if isValidId(planId);
+      allow create, update, delete: if isValidId(planId) && isTeacherAdmin();
+    }
+
+    // Public read for site settings, write strictly restricted to trdanopolot@gmail.com
+    match /settings/{settingsDoc} {
+      allow read: if isValidId(settingsDoc);
+      allow create, update, delete: if isValidId(settingsDoc) && isTeacherAdmin();
+    }
+
+    // Admins collection
+    match /admins/{adminUid} {
+      allow read: if isTeacherAdmin();
+      allow write: if isTeacherAdmin();
+    }
+  }
+}

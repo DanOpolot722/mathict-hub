@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { SITE_CONFIG, buildWhatsAppLink } from '../data/config';
+import { PricingPlan } from '../types';
 import { useToast } from './Toast';
 import { 
   GraduationCap, 
@@ -10,10 +11,16 @@ import {
   CheckCircle2, 
   MessageSquare,
   Sparkles,
-  PhoneCall
+  PhoneCall,
+  Check,
+  Tag
 } from 'lucide-react';
 
-export function SupportView() {
+interface SupportViewProps {
+  pricing?: PricingPlan[];
+}
+
+export function SupportView({ pricing = [] }: SupportViewProps) {
   const { showToast } = useToast();
 
   // Form 1: Online Tutoring
@@ -64,23 +71,107 @@ export function SupportView() {
     window.open(buildWhatsAppLink(message), '_blank', 'noopener,noreferrer');
   };
 
+  const handleInquirePlan = (plan: PricingPlan) => {
+    const msg = `Hello Mr. Opolot Dan. I would like to inquire/enroll for: *${plan.name}* (${plan.price}). Please share schedule and enrollment details.`;
+    window.open(buildWhatsAppLink(msg), '_blank', 'noopener,noreferrer');
+  };
+
   return (
-    <div className="space-y-10 pb-16">
+    <div className="space-y-12 pb-16">
       {/* Page Header */}
       <section className="relative overflow-hidden pt-8 pb-10 px-6 sm:px-8 rounded-3xl bg-gradient-to-br from-[#0B3E91] via-[#1451B8] to-[#14B8A6] text-white shadow-lg">
         <div className="max-w-3xl space-y-3">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-[#2FE0C4] text-xs font-mono font-medium">
             <MessageSquare className="w-3.5 h-3.5" />
-            Direct WhatsApp Academic Help
+            Direct WhatsApp Academic Help &amp; Classes
           </div>
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-white">
-            Student Support &amp; Online Classes
+            Student Support, Tutoring &amp; Rates
           </h1>
           <p className="text-sm sm:text-base text-[#C7D6DC] leading-relaxed">
-            Every form on this page formats your exact question and sends it directly to <strong className="text-white">{SITE_CONFIG.teacherName}</strong> on WhatsApp — no account creation or login required.
+            Direct 1-on-1 coaching, homework troubleshooting, and structured revision packets with <strong className="text-white">{SITE_CONFIG.teacherName}</strong>. Select a plan below or send your question directly on WhatsApp.
           </p>
         </div>
       </section>
+
+      {/* Dynamic Pricing & Packages Section */}
+      {pricing.length > 0 && (
+        <section className="space-y-6">
+          <div className="text-center max-w-2xl mx-auto space-y-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#14B8A6]/10 text-[#14B8A6] text-xs font-mono font-bold">
+              <Tag className="w-3.5 h-3.5" />
+              Official Tuition &amp; Material Rates
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[#0B3E91] dark:text-[#EAF2FA]">
+              Transparent Academic Packages
+            </h2>
+            <p className="text-xs sm:text-sm text-[#4E6478] dark:text-[#9FB6CC]">
+              Up-to-date fees for revision notes, complete UNEB past paper solutions, and live online coaching.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {pricing.map((plan) => (
+              <div
+                key={plan.id}
+                className={`relative rounded-3xl p-6 sm:p-7 flex flex-col justify-between transition-all ${
+                  plan.popular
+                    ? 'bg-gradient-to-b from-white via-white to-[#EEF5FC] dark:from-[#0E2540] dark:to-[#081B30] border-2 border-[#14B8A6] shadow-xl scale-[1.02]'
+                    : 'glass-panel border border-white/70 dark:border-white/10 shadow-sm'
+                }`}
+              >
+                {plan.badge && (
+                  <div className="absolute -top-3.5 right-6 px-3 py-0.5 rounded-full bg-[#14B8A6] text-white text-[11px] font-mono font-bold shadow-sm">
+                    {plan.badge}
+                  </div>
+                )}
+
+                <div className="space-y-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-[#0B3E91] dark:text-[#EAF2FA]">
+                      {plan.name}
+                    </h3>
+                    <p className="text-xs text-[#4E6478] dark:text-[#9FB6CC] mt-1 line-clamp-2">
+                      {plan.description}
+                    </p>
+                  </div>
+
+                  <div className="pt-2">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-[#0B3E91] dark:text-[#58A6FF]">
+                      {plan.price}
+                    </span>
+                  </div>
+
+                  {plan.features.length > 0 && (
+                    <ul className="space-y-2.5 pt-3 border-t border-gray-100 dark:border-white/10 text-xs text-[#142433] dark:text-[#C7D6DC]">
+                      {plan.features.map((feat, i) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <Check className="w-4 h-4 text-[#14B8A6] shrink-0 mt-0.5" />
+                          <span>{feat}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div className="pt-6">
+                  <button
+                    onClick={() => handleInquirePlan(plan)}
+                    className={`w-full min-h-[46px] px-4 py-3 rounded-xl font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all ${
+                      plan.popular
+                        ? 'bg-[#14B8A6] hover:bg-[#2FE0C4] text-white hover:text-[#0B3E91] shadow-md'
+                        : 'bg-[#0B3E91] hover:bg-[#1451B8] text-white'
+                    }`}
+                  >
+                    <Send className="w-4 h-4" />
+                    Book / Inquire on WhatsApp
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Forms Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
