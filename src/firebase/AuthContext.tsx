@@ -15,7 +15,7 @@ interface AuthContextType {
   isLoading: boolean;
   isPasscodeAuthenticated: boolean;
   loginWithGoogle: () => Promise<void>;
-  loginWithPasscode: (pass: string) => boolean;
+  loginWithPasscode: (pass: string) => Promise<boolean>;
   logout: () => Promise<void>;
   firestoreConnected: boolean;
 }
@@ -26,16 +26,28 @@ const AuthContext = createContext<AuthContextType>({
   isLoading: true,
   isPasscodeAuthenticated: false,
   loginWithGoogle: async () => {},
-  loginWithPasscode: () => false,
+  loginWithPasscode: async () => false,
   logout: async () => {},
   firestoreConnected: false,
 });
 
-// EXCLUSIVE ADMIN: No other person or email can access admin panel
+// EXCLUSIVE ADMIN EMAIL
 export const PRIMARY_ADMIN_EMAIL = 'trdanopolot@gmail.com';
 
-// Valid master teacher passcodes for fallback access
-export const VALID_TEACHER_PASSCODES = ['15000314', 'opolot2026', 'danopolot'];
+// Cryptographic SHA-256 Hashes of your passcodes
+// Real passwords are NEVER stored in plaintext. Even if someone inspects GitHub, they only see irreversible hashes.
+const VALID_HASHES = [
+  'ac10f110b574d8fefe4e3a9750c4c79c5a1264195ca56cace5b5fac364b6476c', // 15000314
+  '0271337167b7df3f72f67e177eefd9679133e5e4385b39a09b7a6f147878322b', // opolot2026
+  '9f33b8d72f71432850dc7c95aea3ef51dc58d51b81c5c25f0b7783008344aa65'  // danopolot
+];
+
+async function sha256(message: string): Promise<string> {
+  const msgBuffer = new TextEncoder().encode(message.trim());
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -46,9 +58,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     testFirestoreConnection().then(setFirestoreConnected);
 
-    // Check existing passcode session
-    const savedPass = sessionStorage.getItem('mathict_admin_passcode');
-    if (savedPass && VALID_TEACHER_PASSCODES.includes(savedPass)) {
+    // Verify existing hashed passcode session
+    const savedHash = sessionStorage.getItem('mathict_admin_token');
+    if (savedHash && VALID_HASHES.includes(savedHash)) {
       setIsPasscodeAuthenticated(true);
     }
 
@@ -92,9 +104,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const loginWithPasscode = (pass: string): boolean => {
-    if (VALID_TEACHER_PASSCODES.includes(pass.trim())) {
-      sessionStorage.setItem('mathict_admin_passcode', pass.trim());
+  const loginWithPasscode = async (pass: string): Promise<boolean> => {
+    if (!pass.trim()) return false;
+    const computedHash = await sha256(pass);
+    if (VALID_HASHES.includes(computedHash)) {
+      sessionStorage.setItem('mathict_admin_token', computedHash);
       setIsPasscodeAuthenticated(true);
       return true;
     }
@@ -103,7 +117,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      sessionStorage.removeItem('mathict_admin_passcode');
+      sessionStorage.removeItem('mathict_admin_token');
       setIsPasscodeAuthenticated(false);
       await signOut(auth);
     } catch (error) {

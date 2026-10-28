@@ -358,9 +358,9 @@ export function AdminView({
 
   // 2. Unauthenticated View (Strictly restricted to Mr. Opolot Dan)
   if (!isAdmin) {
-    const handlePasscodeSubmit = (e: React.FormEvent) => {
+    const handlePasscodeSubmit = async (e: React.FormEvent) => {
       e.preventDefault();
-      const success = loginWithPasscode(passcodeInput);
+      const success = await loginWithPasscode(passcodeInput);
       if (success) {
         showToast('Teacher Passcode Accepted! Welcome Mr. Dan.', 'success');
         setPasscodeInput('');
