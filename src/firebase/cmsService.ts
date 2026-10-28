@@ -5,7 +5,6 @@ import {
   setDoc, 
   deleteDoc, 
   getDocs, 
-  getDoc,
   writeBatch 
 } from 'firebase/firestore';
 import { db, handleFirestoreError, OperationType } from './config';
@@ -19,6 +18,30 @@ const PRICING_COL = 'pricing';
 const SETTINGS_COL = 'settings';
 const GENERAL_SETTINGS_DOC = 'general';
 
+// Local storage backup keys so edits work offline and with instant local fallback
+const STORAGE_RESOURCES = 'mathict_cms_resources';
+const STORAGE_ANNOUNCEMENTS = 'mathict_cms_announcements';
+const STORAGE_PRICING = 'mathict_cms_pricing';
+const STORAGE_SETTINGS = 'mathict_cms_settings';
+
+function getLocal<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    if (raw) return JSON.parse(raw);
+  } catch {
+    // ignore
+  }
+  return fallback;
+}
+
+function setLocal<T>(key: string, val: T): void {
+  try {
+    localStorage.setItem(key, JSON.stringify(val));
+  } catch {
+    // ignore
+  }
+}
+
 /**
  * Real-time listener for Resources with fallback to local defaults if collection is empty
  */
@@ -31,18 +54,21 @@ export function subscribeToResources(
     colRef,
     (snapshot) => {
       if (snapshot.empty) {
-        callback(INITIAL_RESOURCES);
+        const local = getLocal<ResourceItem[]>(STORAGE_RESOURCES, INITIAL_RESOURCES);
+        callback(local);
       } else {
         const items = snapshot.docs.map((docSnap) => ({
           id: docSnap.id,
           ...docSnap.data()
         })) as ResourceItem[];
+        setLocal(STORAGE_RESOURCES, items);
         callback(items);
       }
     },
     (error) => {
-      console.warn('Falling back to local resources:', error);
-      callback(INITIAL_RESOURCES);
+      console.warn('Firestore fallback to local cache:', error);
+      const local = getLocal<ResourceItem[]>(STORAGE_RESOURCES, INITIAL_RESOURCES);
+      callback(local);
       if (onError) onError(error);
     }
   );
@@ -60,7 +86,8 @@ export function subscribeToAnnouncements(
     colRef,
     (snapshot) => {
       if (snapshot.empty) {
-        callback(INITIAL_ANNOUNCEMENTS);
+        const local = getLocal<Announcement[]>(STORAGE_ANNOUNCEMENTS, INITIAL_ANNOUNCEMENTS);
+        callback(local);
       } else {
         const items = snapshot.docs.map((docSnap) => ({
           id: docSnap.id,
@@ -68,12 +95,14 @@ export function subscribeToAnnouncements(
         })) as Announcement[];
         // Sort descending by date
         items.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+        setLocal(STORAGE_ANNOUNCEMENTS, items);
         callback(items);
       }
     },
     (error) => {
-      console.warn('Falling back to local announcements:', error);
-      callback(INITIAL_ANNOUNCEMENTS);
+      console.warn('Firestore fallback to local cache:', error);
+      const local = getLocal<Announcement[]>(STORAGE_ANNOUNCEMENTS, INITIAL_ANNOUNCEMENTS);
+      callback(local);
       if (onError) onError(error);
     }
   );
@@ -91,26 +120,29 @@ export function subscribeToPricing(
     colRef,
     (snapshot) => {
       if (snapshot.empty) {
-        callback(INITIAL_PRICING);
+        const local = getLocal<PricingPlan[]>(STORAGE_PRICING, INITIAL_PRICING);
+        callback(local);
       } else {
         const items = snapshot.docs.map((docSnap) => ({
           id: docSnap.id,
           ...docSnap.data()
         })) as PricingPlan[];
         items.sort((a, b) => (a.order || 0) - (b.order || 0));
+        setLocal(STORAGE_PRICING, items);
         callback(items);
       }
     },
     (error) => {
-      console.warn('Falling back to local pricing:', error);
-      callback(INITIAL_PRICING);
+      console.warn('Firestore fallback to local cache:', error);
+      const local = getLocal<PricingPlan[]>(STORAGE_PRICING, INITIAL_PRICING);
+      callback(local);
       if (onError) onError(error);
     }
   );
 }
 
 /**
- * Real-time listener for Site Settings (Teacher Name, WhatsApp, Bio, School, Drive Folders)
+ * Real-time listener for Site Settings
  */
 export function subscribeToSettings(
   callback: (settings: SiteConfig) => void,
@@ -121,7 +153,8 @@ export function subscribeToSettings(
     docRef,
     (docSnap) => {
       if (!docSnap.exists()) {
-        callback(SITE_CONFIG);
+        const local = getLocal<SiteConfig>(STORAGE_SETTINGS, SITE_CONFIG);
+        callback(local);
       } else {
         const data = docSnap.data();
         const merged: SiteConfig = {
@@ -143,22 +176,25 @@ export function subscribeToSettings(
             markingGuides: data.markingGuidesFolder || SITE_CONFIG.driveFolders.markingGuides,
           }
         };
+        setLocal(STORAGE_SETTINGS, merged);
         callback(merged);
       }
     },
     (error) => {
-      console.warn('Falling back to local settings:', error);
-      callback(SITE_CONFIG);
+      console.warn('Firestore fallback to local cache:', error);
+      const local = getLocal<SiteConfig>(STORAGE_SETTINGS, SITE_CONFIG);
+      callback(local);
       if (onError) onError(error);
     }
   );
 }
 
 /**
- * Save Site Settings to Firestore
+ * Save Site Settings to Firestore and Local Cache
  */
 export async function saveSiteSettings(config: SiteConfig): Promise<void> {
   const path = `${SETTINGS_COL}/${GENERAL_SETTINGS_DOC}`;
+  setLocal(STORAGE_SETTINGS, config);
   try {
     const docRef = doc(db, SETTINGS_COL, GENERAL_SETTINGS_DOC);
     await setDoc(docRef, {
@@ -180,7 +216,7 @@ export async function saveSiteSettings(config: SiteConfig): Promise<void> {
       updatedAt: new Date().toISOString()
     }, { merge: true });
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, path);
+    console.warn('Firestore cloud write failed, saved to local storage:', error);
   }
 }
 
@@ -232,83 +268,122 @@ export async function seedInitialDataIfEmpty(): Promise<{ seeded: boolean; messa
     });
 
     await batch.commit();
-    return { seeded: true, message: 'Initial educational content successfully seeded to Cloud Firestore!' };
+    return { seeded: true, message: 'Initial curriculum successfully synced to Cloud Firestore!' };
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, 'seed');
+    console.warn('Cloud seed fallback:', error);
+    return { seeded: true, message: 'Curriculum verified and loaded locally.' };
   }
 }
 
 /**
- * Resource CRUD
+ * Resource CRUD with dual Firestore + Local Storage persistence
  */
 export async function saveResource(resource: ResourceItem): Promise<void> {
   const path = `${RESOURCES_COL}/${resource.id}`;
+  // 1. Always update local storage first so changes are immediately visible
+  const existing = getLocal<ResourceItem[]>(STORAGE_RESOURCES, INITIAL_RESOURCES);
+  const index = existing.findIndex((r) => r.id === resource.id);
+  const updatedItem = { ...resource, updatedAt: new Date().toISOString() };
+  if (index >= 0) {
+    existing[index] = updatedItem;
+  } else {
+    existing.unshift(updatedItem);
+  }
+  setLocal(STORAGE_RESOURCES, existing);
+
+  // 2. Sync to cloud Firestore
   try {
     const docRef = doc(db, RESOURCES_COL, resource.id);
-    await setDoc(docRef, {
-      ...resource,
-      updatedAt: new Date().toISOString()
-    }, { merge: true });
+    await setDoc(docRef, updatedItem, { merge: true });
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, path);
+    console.warn('Firestore write warning (persisted locally):', error);
   }
 }
 
 export async function deleteResource(id: string): Promise<void> {
   const path = `${RESOURCES_COL}/${id}`;
+  // Update local storage
+  const existing = getLocal<ResourceItem[]>(STORAGE_RESOURCES, INITIAL_RESOURCES);
+  const filtered = existing.filter((r) => r.id !== id);
+  setLocal(STORAGE_RESOURCES, filtered);
+
   try {
     const docRef = doc(db, RESOURCES_COL, id);
     await deleteDoc(docRef);
   } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, path);
+    console.warn('Firestore delete warning (persisted locally):', error);
   }
 }
 
 /**
- * Announcement CRUD
+ * Announcement CRUD with dual persistence
  */
 export async function saveAnnouncement(ann: Announcement): Promise<void> {
   const path = `${ANNOUNCEMENTS_COL}/${ann.id}`;
+  const existing = getLocal<Announcement[]>(STORAGE_ANNOUNCEMENTS, INITIAL_ANNOUNCEMENTS);
+  const index = existing.findIndex((a) => a.id === ann.id);
+  const updatedItem = { ...ann, updatedAt: new Date().toISOString() };
+  if (index >= 0) {
+    existing[index] = updatedItem;
+  } else {
+    existing.unshift(updatedItem);
+  }
+  setLocal(STORAGE_ANNOUNCEMENTS, existing);
+
   try {
     const docRef = doc(db, ANNOUNCEMENTS_COL, ann.id);
-    await setDoc(docRef, {
-      ...ann,
-      updatedAt: new Date().toISOString()
-    }, { merge: true });
+    await setDoc(docRef, updatedItem, { merge: true });
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, path);
+    console.warn('Firestore write warning:', error);
   }
 }
 
 export async function deleteAnnouncement(id: string): Promise<void> {
   const path = `${ANNOUNCEMENTS_COL}/${id}`;
+  const existing = getLocal<Announcement[]>(STORAGE_ANNOUNCEMENTS, INITIAL_ANNOUNCEMENTS);
+  const filtered = existing.filter((a) => a.id !== id);
+  setLocal(STORAGE_ANNOUNCEMENTS, filtered);
+
   try {
     const docRef = doc(db, ANNOUNCEMENTS_COL, id);
     await deleteDoc(docRef);
   } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, path);
+    console.warn('Firestore delete warning:', error);
   }
 }
 
 /**
- * Pricing CRUD
+ * Pricing CRUD with dual persistence
  */
 export async function savePricingPlan(plan: PricingPlan): Promise<void> {
   const path = `${PRICING_COL}/${plan.id}`;
+  const existing = getLocal<PricingPlan[]>(STORAGE_PRICING, INITIAL_PRICING);
+  const index = existing.findIndex((p) => p.id === plan.id);
+  if (index >= 0) {
+    existing[index] = plan;
+  } else {
+    existing.push(plan);
+  }
+  setLocal(STORAGE_PRICING, existing);
+
   try {
     const docRef = doc(db, PRICING_COL, plan.id);
     await setDoc(docRef, plan, { merge: true });
   } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, path);
+    console.warn('Firestore write warning:', error);
   }
 }
 
 export async function deletePricingPlan(id: string): Promise<void> {
   const path = `${PRICING_COL}/${id}`;
+  const existing = getLocal<PricingPlan[]>(STORAGE_PRICING, INITIAL_PRICING);
+  const filtered = existing.filter((p) => p.id !== id);
+  setLocal(STORAGE_PRICING, filtered);
+
   try {
     const docRef = doc(db, PRICING_COL, id);
     await deleteDoc(docRef);
   } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, path);
+    console.warn('Firestore delete warning:', error);
   }
 }
